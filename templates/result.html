@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Detection Results - Fruit Detection App{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-10 col-lg-10">
+            <div class="text-center mb-3">
+                <img src="{{ url_for('static', filename='uploads/' + image_path) }}" alt="Processed Image" class="result-image img-fluid wide-image">
+            </div>
+            <div class="detection-results-container">
+                <h2>Detection Results</h2>
+                <div class="confidence-section">
+                    <span class="label">Confidence Level:</span>
+                    <span class="confidence-value">{{ '%.2f' % (confidence * 100) }}%</span>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" style="width: {{ confidence * 100 }}%;"></div>
+                    </div>
+                </div>
+                <hr>
+                <div class="ripeness-section">
+                    <span class="label">Ripeness Count</span><br>
+                    <span class="label">Ripe:</span> {{ total_ripe }}<br>
+                    <span class="label">Unripe:</span> {{ total_unripe }}
+                </div>
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('detect') }}" class="btn btn-primary me-2">New Detection</a>
+                    <a href="{{ url_for('history') }}" class="btn btn-outline-primary">View History</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+body {
+    min-height: 100vh;
+    overflow-y: auto;
+}
+.container {
+    min-height: 80vh;
+    padding-top: 1.5rem !important;
+    padding-bottom: 1.5rem !important;
+}
+.wide-image {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 1000px;
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+}
+.result-image {
+    background: none !important;
+    object-fit: contain;
+    width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+</style>
+{% endblock %} 

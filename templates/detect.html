@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+
+{% block title %}Detect Fruit - Fruit Detection App{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4">
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <div class="card shadow" style="max-width: 1800px; margin-left:auto; margin-right:auto;">
+                <div class="card-body py-5 px-2 px-md-5">
+                    <h2 class="card-title text-center mb-4">Detect Fruit</h2>
+                    
+                    <form method="POST" enctype="multipart/form-data" class="mb-4" id="uploadForm">
+                        <div class="row">
+                            <div class="col-12 mb-4">
+                                <div class="upload-area mb-4" id="dropZone">
+                                    <input type="file" name="file" id="fileInput" class="d-none" accept="image/*" required>
+                                    <div class="text-center p-4">
+                                        <i class="fas fa-cloud-upload-alt fa-4x mb-3 text-primary"></i>
+                                        <h3 class="h5">Drag and drop your image here</h3>
+                                        <p class="text-muted">or</p>
+                                        <button type="button" class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                                            Choose File
+                                        </button>
+                                        <p class="text-muted mt-2" id="fileName">No file chosen</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-lg-3">
+                                <div class="preview-area mb-4" id="previewArea" style="display: none;">
+                                    <div class="card">
+                                        <div class="card-body text-center">
+                                            <h3 class="h5 mb-3">Image Preview</h3>
+                                            <img id="imagePreview" class="img-fluid rounded mb-3" style="max-height: 200px;">
+                                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="clearPreview()">
+                                                <i class="fas fa-times me-1"></i>Remove
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg" id="detectButton" disabled>
+                                <i class="fas fa-search me-2"></i>Detect Fruit
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h4 class="h5 mb-3">
+                                        <i class="fas fa-lightbulb text-warning me-2"></i>
+                                        Tips for best results
+                                    </h4>
+                                    <ul class="list-unstyled mb-0">
+                                        <li class="mb-2">
+                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                            Use clear, well-lit images
+                                        </li>
+                                        <li class="mb-2">
+                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                            Ensure the fruit is clearly visible
+                                        </li>
+                                        <li class="mb-2">
+                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                            Take photos against a neutral background
+                                        </li>
+                                        <li>
+                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                            Avoid blurry or distorted images
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h4 class="h5 mb-3">
+                                        <i class="fas fa-info-circle text-info me-2"></i>
+                                        Supported Formats
+                                    </h4>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <p class="mb-2">
+                                                <i class="fas fa-file-image text-primary me-2"></i>
+                                                JPG, JPEG
+                                            </p>
+                                            <p class="mb-2">
+                                                <i class="fas fa-file-image text-primary me-2"></i>
+                                                PNG
+                                            </p>
+                                        </div>
+                                        <div class="col-6">
+                                            <p class="mb-2">
+                                                <i class="fas fa-file-image text-primary me-2"></i>
+                                                GIF
+                                            </p>
+                                            <p class="mb-0">
+                                                <i class="fas fa-weight text-primary me-2"></i>
+                                                Max size: 16MB
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileName = document.getElementById('fileName');
+    const previewArea = document.getElementById('previewArea');
+    const imagePreview = document.getElementById('imagePreview');
+    const detectButton = document.getElementById('detectButton');
+
+    // Handle file selection
+    fileInput.addEventListener('change', function() {
+        handleFileSelect(this.files[0]);
+    });
+
+    // Prevent default drag behaviors
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+        document.body.addEventListener(eventName, preventDefaults, false);
+    });
+
+    // Highlight drop zone when item is dragged over it
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, unhighlight, false);
+    });
+
+    // Handle dropped files
+    dropZone.addEventListener('drop', handleDrop, false);
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    function highlight(e) {
+        dropZone.classList.add('bg-light');
+    }
+
+    function unhighlight(e) {
+        dropZone.classList.remove('bg-light');
+    }
+
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        handleFileSelect(files[0]);
+    }
+
+    function handleFileSelect(file) {
+        if (file) {
+            fileName.textContent = file.name;
+            detectButton.disabled = false;
+            
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imagePreview.src = e.target.result;
+                previewArea.style.display = 'block';
+            }
+            reader.readAsDataURL(file);
+        } else {
+            fileName.textContent = 'No file chosen';
+            detectButton.disabled = true;
+            previewArea.style.display = 'none';
+        }
+    }
+
+    window.clearPreview = function() {
+        fileInput.value = '';
+        fileName.textContent = 'No file chosen';
+        detectButton.disabled = true;
+        previewArea.style.display = 'none';
+    }
+});
+</script>
+
+<style>
+.upload-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 10px;
+    background-color: #fff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-height: 400px;
+    min-width: 800px;
+    max-width: 1400px;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+.upload-area:hover {
+    border-color: #0d6efd;
+    background-color: #f8f9fa;
+}
+
+.preview-area {
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.preview-area img {
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+    max-height: 400px;
+    min-width: 300px;
+    min-height: 300px;
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+.card {
+    border: none;
+    border-radius: 10px;
+}
+
+.bg-light {
+    background-color: #f8f9fa !important;
+}
+
+.btn-primary {
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+}
+
+.btn-outline-danger {
+    padding: 0.5rem 1rem;
+}
+
+/* Make the detect page container larger and more spacious */
+.card.shadow {
+    padding: 2rem 2.5rem;
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+@media (min-width: 1400px) {
+    .card.shadow {
+        max-width: 1300px;
+    }
+    .upload-area {
+        min-width: 1100px;
+        max-width: 1800px;
+    }
+}
+
+@media (min-width: 992px) {
+    .upload-area {
+        min-width: 600px;
+        min-height: 480px;
+        max-width: 1000px;
+    }
+}
+
+@media (max-width: 768px) {
+    .upload-area {
+        min-width: 220px;
+        min-height: 220px;
+        max-width: 100%;
+    }
+}
+</style>
+{% endblock %} 

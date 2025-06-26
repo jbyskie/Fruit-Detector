@@ -1,0 +1,634 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Fruit Detection App{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="welcome-card card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <div class="welcome-icon me-3">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div>
+                                <h2 class="card-title mb-1">Welcome back, {{ current_user.username }}!</h2>
+                                <p class="card-text text-muted">Here's your detection overview and statistics</p>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('export_dashboard_summary') }}" class="btn btn-outline-light">
+                                <i class="fas fa-download me-2"></i>Export Summary
+                            </a>
+                            <a href="{{ url_for('export_history') }}" class="btn btn-outline-light">
+                                <i class="fas fa-file-excel me-2"></i>Export History
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards Row -->
+    <div class="row mb-4">
+        <!-- Total Detections Card -->
+        <div class="col-lg-6 mb-4">
+            <div class="stat-card card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h5 class="card-title text-muted mb-1">Total Detections</h5>
+                            <h2 class="stat-number mb-0">{{ today_detections + week_detections + month_detections }}</h2>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-microscope"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Time Filter Toggles -->
+                    <div class="time-filters mb-3">
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="timeFilter" id="today" checked>
+                            <label class="btn btn-outline-primary" for="today">
+                                <i class="fas fa-calendar-day me-1"></i>Today
+                                <span class="badge bg-primary ms-1">{{ today_detections }}</span>
+                            </label>
+                            
+                            <input type="radio" class="btn-check" name="timeFilter" id="week">
+                            <label class="btn btn-outline-primary" for="week">
+                                <i class="fas fa-calendar-week me-1"></i>Week
+                                <span class="badge bg-primary ms-1">{{ week_detections }}</span>
+                            </label>
+                            
+                            <input type="radio" class="btn-check" name="timeFilter" id="month">
+                            <label class="btn btn-outline-primary" for="month">
+                                <i class="fas fa-calendar-alt me-1"></i>Month
+                                <span class="badge bg-primary ms-1">{{ month_detections }}</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Bar -->
+                    <div class="progress mb-2" style="height: 8px;">
+                        <div class="progress-bar" role="progressbar" style="width: 75%;" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <small class="text-muted">75% of monthly goal achieved</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Most Common Objects Card -->
+        <div class="col-lg-6 mb-4">
+            <div class="stat-card card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h5 class="card-title text-muted mb-1">Mangosteen Detection Stats</h5>
+                            <h2 class="stat-number mb-0">{{ common_objects|length }}</h2>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-apple-alt"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Object List -->
+                    <div class="objects-list">
+                        {% for obj in common_objects %}
+                        <div class="object-item d-flex align-items-center justify-content-between mb-2">
+                            <div class="d-flex align-items-center">
+                                <div class="object-icon me-2">
+                                    <i class="fas fa-apple-alt text-success"></i>
+                                </div>
+                                <span class="object-name">Mangosteen</span>
+                            </div>
+                            <div class="object-stats">
+                                <span class="badge bg-light text-dark">{{ obj.count }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Ripeness Distribution -->
+                    {% if ripeness_stats %}
+                    <div class="mt-3">
+                        <h6 class="text-muted mb-2">Mangosteen Ripeness Distribution</h6>
+                        <div class="ripeness-bars">
+                            {% for ripeness in ripeness_stats %}
+                            <div class="ripeness-item d-flex align-items-center justify-content-between mb-1">
+                                <span class="ripeness-label">
+                                    {% if ripeness.ripeness == 'ripe' %}
+                                        <i class="fas fa-circle text-success me-1"></i>Ripe Mangosteen
+                                    {% elif ripeness.ripeness == 'unripe' %}
+                                        <i class="fas fa-circle text-warning me-1"></i>Unripe Mangosteen
+                                    {% else %}
+                                        <i class="fas fa-circle text-secondary me-1"></i>{{ ripeness.ripeness|title }} Mangosteen
+                                    {% endif %}
+                                </span>
+                                <span class="badge bg-light text-dark">{{ ripeness.count }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="activity-card card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-clock me-2"></i>Recent Activity
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_detections %}
+                    <div class="activity-list">
+                        {% for detection in recent_detections %}
+                        <div class="activity-item d-flex align-items-center py-2 border-bottom">
+                            <div class="activity-icon me-3">
+                                {% if detection.ripeness == 'ripe' %}
+                                    <i class="fas fa-check-circle text-success"></i>
+                                {% elif detection.ripeness == 'unripe' %}
+                                    <i class="fas fa-clock text-warning"></i>
+                                {% else %}
+                                    <i class="fas fa-question-circle text-secondary"></i>
+                                {% endif %}
+                            </div>
+                            <div class="activity-content flex-grow-1">
+                                <div class="activity-title">
+                                    Detected <strong>Mangosteen</strong> 
+                                    ({{ detection.ripeness|title }})
+                                </div>
+                                <div class="activity-meta text-muted">
+                                    <small>
+                                        <i class="fas fa-calendar me-1"></i>
+                                        {{ detection.timestamp.strftime('%B %d, %Y at %I:%M %p') }}
+                                        <span class="ms-2">
+                                            <i class="fas fa-percentage me-1"></i>
+                                            {{ "%.1f"|format(detection.confidence * 100) }}% confidence
+                                        </span>
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="activity-actions">
+                                <a href="{{ url_for('uploaded_file', filename=detection.image_path) }}" 
+                                   class="btn btn-sm btn-outline-primary" target="_blank">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No recent detections found</p>
+                        <a href="{{ url_for('detect') }}" class="btn btn-primary">
+                            <i class="fas fa-upload me-1"></i>Start Detecting
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.welcome-card {
+    background: linear-gradient(135deg, #34c759 0%, #43ea7f 100%);
+    color: white;
+    border: none;
+}
+
+.welcome-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.stat-card {
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(52, 199, 89, 0.15);
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #34c759;
+    line-height: 1;
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #34c759 0%, #43ea7f 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+}
+
+.time-filters .btn-group {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.time-filters .btn {
+    border-radius: 0;
+    border: 1px solid #34c759;
+    color: #34c759;
+    background: transparent;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    transition: all 0.2s ease;
+}
+
+.time-filters .btn:hover,
+.time-filters .btn-check:checked + .btn {
+    background: #34c759;
+    color: white;
+    border-color: #34c759;
+}
+
+.objects-list {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.object-item {
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.object-item:hover {
+    background-color: rgba(52, 199, 89, 0.1);
+}
+
+.object-icon {
+    width: 30px;
+    height: 30px;
+    background: rgba(52, 199, 89, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+}
+
+.object-name {
+    font-weight: 500;
+    color: #333;
+}
+
+.ripeness-bars {
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.ripeness-item {
+    padding: 0.25rem 0;
+}
+
+.ripeness-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.activity-card {
+    border: none;
+}
+
+.activity-card .card-header {
+    background: rgba(52, 199, 89, 0.1);
+    border-bottom: 1px solid rgba(52, 199, 89, 0.2);
+    border-radius: 1.5rem 1.5rem 0 0;
+}
+
+.activity-item {
+    transition: background-color 0.2s ease;
+}
+
+.activity-item:hover {
+    background-color: rgba(52, 199, 89, 0.05);
+}
+
+.activity-item:last-child {
+    border-bottom: none !important;
+}
+
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(52, 199, 89, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.activity-title {
+    font-weight: 500;
+    color: #333;
+}
+
+.activity-meta {
+    font-size: 0.85rem;
+}
+
+.activity-actions .btn {
+    border-radius: 8px;
+    padding: 0.25rem 0.5rem;
+}
+
+.progress {
+    background-color: rgba(52, 199, 89, 0.1);
+    border-radius: 10px;
+}
+
+.progress-bar {
+    background: linear-gradient(90deg, #34c759 0%, #43ea7f 100%);
+    border-radius: 10px;
+}
+
+@media (max-width: 768px) {
+    .stat-number {
+        font-size: 2rem;
+    }
+    
+    .time-filters .btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.9rem;
+    }
+    
+    .welcome-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.2rem;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize dashboard functionality
+    initializeDashboard();
+    
+    function initializeDashboard() {
+        // Time filter functionality
+        setupTimeFilters();
+        
+        // Animate elements on load
+        animateOnLoad();
+        
+        // Setup hover effects
+        setupHoverEffects();
+    }
+    
+    function setupTimeFilters() {
+        const timeFilters = document.querySelectorAll('input[name="timeFilter"]');
+        const statNumber = document.querySelector('.stat-number');
+        const progressBar = document.querySelector('.progress-bar');
+        
+        if (!statNumber || !timeFilters.length) return;
+        
+        timeFilters.forEach(filter => {
+            filter.addEventListener('change', function() {
+                const value = this.id;
+                let count = 0;
+                let progress = 0;
+                
+                switch(value) {
+                    case 'today':
+                        count = {{ today_detections }};
+                        progress = Math.min((count / 10) * 100, 100); // Assuming 10 is daily goal
+                        break;
+                    case 'week':
+                        count = {{ week_detections }};
+                        progress = Math.min((count / 50) * 100, 100); // Assuming 50 is weekly goal
+                        break;
+                    case 'month':
+                        count = {{ month_detections }};
+                        progress = Math.min((count / 200) * 100, 100); // Assuming 200 is monthly goal
+                        break;
+                }
+                
+                // Animate the number change
+                animateNumber(statNumber, count);
+                
+                // Animate progress bar
+                if (progressBar) {
+                    animateProgressBar(progressBar, progress);
+                }
+                
+                // Update progress text
+                updateProgressText(progress);
+            });
+        });
+    }
+    
+    function animateNumber(element, target) {
+        const start = parseInt(element.textContent) || 0;
+        const increment = (target - start) / 20;
+        let current = start;
+        
+        const timer = setInterval(() => {
+            current += increment;
+            if ((increment > 0 && current >= target) || (increment < 0 && current <= target)) {
+                element.textContent = target;
+                clearInterval(timer);
+            } else {
+                element.textContent = Math.floor(current);
+            }
+        }, 50);
+    }
+    
+    function animateProgressBar(progressBar, targetWidth) {
+        const currentWidth = parseInt(progressBar.style.width) || 0;
+        const increment = (targetWidth - currentWidth) / 20;
+        let current = currentWidth;
+        
+        const timer = setInterval(() => {
+            current += increment;
+            if ((increment > 0 && current >= targetWidth) || (increment < 0 && current <= targetWidth)) {
+                progressBar.style.width = targetWidth + '%';
+                progressBar.setAttribute('aria-valuenow', targetWidth);
+                clearInterval(timer);
+            } else {
+                progressBar.style.width = current + '%';
+                progressBar.setAttribute('aria-valuenow', current);
+            }
+        }, 50);
+    }
+    
+    function updateProgressText(progress) {
+        const progressText = document.querySelector('.text-muted');
+        if (progressText && progressText.textContent.includes('%')) {
+            progressText.textContent = Math.round(progress) + '% of goal achieved';
+        }
+    }
+    
+    function animateOnLoad() {
+        // Animate stat cards
+        const statCards = document.querySelectorAll('.stat-card');
+        statCards.forEach((card, index) => {
+            setTimeout(() => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'all 0.6s ease';
+                
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 100);
+            }, index * 200);
+        });
+        
+        // Animate welcome card
+        const welcomeCard = document.querySelector('.welcome-card');
+        if (welcomeCard) {
+            welcomeCard.style.opacity = '0';
+            welcomeCard.style.transform = 'scale(0.9)';
+            welcomeCard.style.transition = 'all 0.8s ease';
+            
+            setTimeout(() => {
+                welcomeCard.style.opacity = '1';
+                welcomeCard.style.transform = 'scale(1)';
+            }, 300);
+        }
+        
+        // Animate activity items
+        const activityItems = document.querySelectorAll('.activity-item');
+        activityItems.forEach((item, index) => {
+            setTimeout(() => {
+                item.style.opacity = '0';
+                item.style.transform = 'translateX(-20px)';
+                item.style.transition = 'all 0.5s ease';
+                
+                setTimeout(() => {
+                    item.style.opacity = '1';
+                    item.style.transform = 'translateX(0)';
+                }, 100);
+            }, index * 150);
+        });
+    }
+    
+    function setupHoverEffects() {
+        // Add ripple effect to buttons
+        const buttons = document.querySelectorAll('.btn');
+        buttons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                const ripple = document.createElement('span');
+                const rect = this.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                const x = e.clientX - rect.left - size / 2;
+                const y = e.clientY - rect.top - size / 2;
+                
+                ripple.style.width = ripple.style.height = size + 'px';
+                ripple.style.left = x + 'px';
+                ripple.style.top = y + 'px';
+                ripple.classList.add('ripple');
+                
+                this.appendChild(ripple);
+                
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+            });
+        });
+        
+        // Add pulse animation to stat icons
+        const statIcons = document.querySelectorAll('.stat-icon');
+        statIcons.forEach(icon => {
+            icon.addEventListener('mouseenter', function() {
+                this.style.animation = 'pulse 0.6s ease-in-out';
+            });
+            
+            icon.addEventListener('animationend', function() {
+                this.style.animation = '';
+            });
+        });
+    }
+    
+    // Add CSS for ripple effect
+    const style = document.createElement('style');
+    style.textContent = `
+        .btn {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.6);
+            transform: scale(0);
+            animation: ripple-animation 0.6s linear;
+            pointer-events: none;
+        }
+        
+        @keyframes ripple-animation {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .stat-card {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        
+        .welcome-card {
+            opacity: 0;
+            transform: scale(0.9);
+        }
+        
+        .activity-item {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Auto-refresh dashboard data every 5 minutes
+    setInterval(() => {
+        // You can add AJAX call here to refresh data
+        console.log('Dashboard data refresh interval');
+    }, 300000);
+});
+</script>
+{% endblock %} 
